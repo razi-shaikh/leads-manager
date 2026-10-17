@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Task Plan — Bike Purchase Leads Management System</title>
+<style>
+  body { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+         line-height: 1.6; color: #1a1a1a; max-width: 960px; margin: 0 auto;
+         padding: 2rem 1.25rem 4rem; }
+  h1 { font-size: 1.75rem; border-bottom: 2px solid #1a1a1a; padding-bottom: .5rem; }
+  h2 { font-size: 1.25rem; margin-top: 2.5rem; border-bottom: 1px solid #ddd; padding-bottom: .25rem; }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: .9rem; }
+  th, td { border: 1px solid #ccc; padding: .5rem .6rem; text-align: left; vertical-align: top; }
+  th { background: #f2f2f2; }
+  code { background: #f2f2f2; padding: .1rem .35rem; border-radius: 4px; font-size: .88em; }
+  .meta { color: #555; font-size: .95rem; }
+</style>
+</head>
+<body>
+
+<h1>Task Plan — Bike Purchase Leads Management System (MVP)</h1>
+<p class="meta">Version: Draft for review &nbsp;|&nbsp; Date: 2026-10-17<br>
+Milestone 1 is the first end-to-end vertical slice. Tests and security tasks are inline, not deferred.
+Validation commands run from the repo root. All statuses start at todo.</p>
+
+<h2>Milestone 1 — Foundation: Auth + Data Model + First Lead on Screen</h2>
+<table>
+  <tr><th>Task</th><th>Description</th><th>Files</th><th>Depends on</th><th>Acceptance criteria</th><th>Validation</th><th>Status</th></tr>
+  <tr><td>T1.1 Scaffold + deps</td><td>Install Drizzle, Zod, jose, papaparse, server-only, Vitest, lucide-react; shadcn init (lucide icons) + base components (button, card, badge, input, skeleton); env example; ESLint server-only rule.</td><td><code>package.json</code>, <code>components.json</code>, <code>src/components/ui/*</code>, <code>.env.example</code>, <code>eslint.config.mjs</code></td><td>none</td><td>Install + shadcn init clean; <code>tsc</code> passes on untouched app.</td><td><code>npm i &amp;&amp; npx shadcn@latest init --defaults -y &amp;&amp; npx tsc --noEmit</code></td><td>todo</td></tr>
+  <tr><td>T1.2 DB schema + migrate</td><td>Drizzle schema for leads, lead_notes, lead_events; generate + apply migration to Neon branch DB.</td><td><code>src/db/schema.ts</code>, <code>drizzle/*</code>, <code>src/db/client.ts</code></td><td>T1.1</td><td>Tables exist on branch DB; types derive from schema.</td><td><code>npx drizzle-kit check</code> + inspect DB</td><td>todo</td></tr>
+  <tr><td>T1.3 Auth + guard</td><td>Login page, session cookie (jose), middleware redirect, <code>requireSession()</code>, logout. Bcrypt-hash setup note.</td><td><code>src/app/login/*</code>, <code>src/lib/auth.ts</code>, <code>middleware.ts</code></td><td>T1.1</td><td>Valid login enters app; invalid rejected; direct URL without session redirects. (S3–S6)</td><td>Manual + <code>npx tsc --noEmit</code></td><td>todo</td></tr>
+  <tr><td>T1.4 Service layer + seed</td><td>server-only lead service (list/get/create/update-status) + seed script with 3 sample leads.</td><td><code>src/services/lead.service.ts</code>, <code>scripts/seed.ts</code></td><td>T1.2, T1.3</td><td>Seeded leads readable only via authed server path; no DB import outside services (ESLint).</td><td><code>npm run seed</code>, <code>npx eslint .</code></td><td>todo</td></tr>
+  <tr><td>T1.5 App shell + first card</td><td>Authed layout + nav; LeadCard composed from shadcn Card + Badge (status variants) + Carousel rendering seeded leads.</td><td><code>src/app/(app)/layout.tsx</code>, <code>src/components/global/*</code></td><td>T1.4</td><td>Login → see 3 lead cards with correct details and tags.</td><td>Manual + <code>npm run build</code></td><td>todo</td></tr>
+</table>
+
+<h2>Milestone 2 — Import + Dashboard</h2>
+<table>
+  <tr><th>Task</th><th>Description</th><th>Files</th><th>Depends on</th><th>Acceptance criteria</th><th>Validation</th><th>Status</th></tr>
+  <tr><td>T2.1 CSV import</td><td>Upload UI + Route Handler: Papa Parse server-side, Zod row validation, duplicate tagging (Phone+Reg), import report. Unit tests for parse/dedup.</td><td><code>src/app/(app)/import/*</code>, <code>src/services/import.service.ts</code>, <code>src/lib/csv.ts</code>, tests</td><td>T1.4</td><td>Sample CSV imports; all rows created as New Lead; duplicates tagged; malformed file rejected cleanly. (FR-I1–I4)</td><td><code>npx vitest run</code> + manual import</td><td>todo</td></tr>
+  <tr><td>T2.2 Dashboard</td><td>StatCards per status + new-today count + source filter.</td><td><code>src/app/(app)/dashboard/*</code>, <code>src/services/stats.service.ts</code></td><td>T2.1</td><td>Counts match DB; source filter updates all counts. (FR-D1–D3)</td><td>Manual + <code>npx tsc --noEmit</code></td><td>todo</td></tr>
+</table>
+
+<h2>Milestone 3 — All Leads + Pipeline + Card Actions</h2>
+<table>
+  <tr><th>Task</th><th>Description</th><th>Files</th><th>Depends on</th><th>Acceptance criteria</th><th>Validation</th><th>Status</th></tr>
+  <tr><td>T3.1 All Leads page</td><td>Card grid + SearchBar (name/phone/reg) + FilterBar (status, source) + Pagination (50/page) + skeletons/empty states.</td><td><code>src/app/(app)/leads/*</code></td><td>T1.5, T2.1</td><td>Search/filter/paginate combine correctly; page resets on filter change. (FR-L1–L5)</td><td>Manual + <code>npm run build</code></td><td>todo</td></tr>
+  <tr><td>T3.2 Pipeline page</td><td>shadcn Tabs (5 tabs, Qualified default) + same card grid/search/pagination as All Leads.</td><td><code>src/app/(app)/pipeline/*</code></td><td>T3.1</td><td>Tabs show correct status sets; Qualified default; no New Lead tab. (FR-P1–P3)</td><td>Manual</td><td>todo</td></tr>
+  <tr><td>T3.3 Status change</td><td>StatusDropdown (shadcn Select) on cards (all pages) via Server Action; writes lead_events row; optimistic UI with revert-on-fail.</td><td><code>src/components/global/StatusDropdown.tsx</code>, actions</td><td>T3.1</td><td>Any→any status move persists and appears in history. (FR-C3)</td><td>Manual</td><td>todo</td></tr>
+  <tr><td>T3.4 Notes + history</td><td>NotesPanel (add/list) + HistoryTimeline (status/note/edit events).</td><td><code>src/components/.../NotesPanel.tsx</code>, <code>HistoryTimeline.tsx</code>, <code>src/services/note.service.ts</code></td><td>T3.3</td><td>Note saved with timestamp; timeline shows full history in order. (FR-N1–N2)</td><td>Manual</td><td>todo</td></tr>
+  <tr><td>T3.5 Edit + delete</td><td>Edit form (shadcn Field/Input, all fields) + delete with AlertDialog confirm.</td><td><code>src/app/(app)/leads/[id]/*</code> or modal</td><td>T3.1</td><td>Every field editable and persists; delete removes lead + notes + events. (FR-C4–C5)</td><td>Manual</td><td>todo</td></tr>
+</table>
+
+<h2>Milestone 4 — Photos + Hardening + Deploy</h2>
+<table>
+  <tr><th>Task</th><th>Description</th><th>Files</th><th>Depends on</th><th>Acceptance criteria</th><th>Validation</th><th>Status</th></tr>
+  <tr><td>T4.1 Photo display + upload</td><td>CSV photo URLs in carousel; upload Route Handler validating + forwarding files to Frappe; token server-only.</td><td><code>src/services/photo.service.ts</code>, upload route, carousel states</td><td>T1.5</td><td>CSV photos render; uploaded files appear in carousel; token absent from client bundle. (FR-M1–M3, S9–S10)</td><td>Manual + bundle grep for token</td><td>todo</td></tr>
+  <tr><td>T4.2 Responsive + a11y pass</td><td>360px check, 44px targets, focus states, contrast, reduced-motion.</td><td>Various components</td><td>T3.5, T4.1</td><td>No overflow at 360px; keyboard-only flow works; design.html §3 satisfied.</td><td>Manual device/width checks</td><td>todo</td></tr>
+  <tr><td>T4.3 Security pass</td><td>Login throttling (per O3 decision), .gitignore audit, log-line review, error-message review.</td><td><code>src/lib/auth.ts</code>, <code>.gitignore</code></td><td>T1.3</td><td>Checklist S1–S18 addressed or explicitly deferred with reason.</td><td>Checklist review + <code>npx eslint .</code></td><td>todo</td></tr>
+  <tr><td>T4.4 Vercel deploy</td><td>Prod env vars, production migration, deploy, PRD §8 acceptance run on prod.</td><td>Vercel dashboard, <code>drizzle/*</code></td><td>T4.1–T4.3</td><td>All five PRD acceptance steps pass on the production URL.</td><td>Manual E2E on prod</td><td>todo</td></tr>
+</table>
+
+</body>
+</html>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Security Checklist — Bike Purchase Leads Management System</title>
+<style>
+  body { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+         line-height: 1.6; color: #1a1a1a; max-width: 880px; margin: 0 auto;
+         padding: 2rem 1.25rem 4rem; }
+  h1 { font-size: 1.75rem; border-bottom: 2px solid #1a1a1a; padding-bottom: .5rem; }
+  h2 { font-size: 1.25rem; margin-top: 2.5rem; border-bottom: 1px solid #ddd; padding-bottom: .25rem; }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: .95rem; }
+  th, td { border: 1px solid #ccc; padding: .5rem .75rem; text-align: left; vertical-align: top; }
+  th { background: #f2f2f2; }
+  code { background: #f2f2f2; padding: .1rem .35rem; border-radius: 4px; font-size: .9em; }
+  .meta { color: #555; font-size: .95rem; }
+</style>
+</head>
+<body>
+
+<h1>Security Checklist — Bike Purchase Leads Management System (MVP)</h1>
+<p class="meta">Version: Draft for review &nbsp;|&nbsp; Date: 2026-10-17<br>
+This checklist identifies items to address — it is not a security audit.
+Single-user internal tool handling customer PII (names, phones, emails).</p>
+
+<h2>1. Data Sensitivity</h2>
+<table>
+  <tr><th>#</th><th>Item</th><th>How addressed</th></tr>
+  <tr><td>S1</td><td>PII identified and minimized</td><td>PII = customer name, phone, email. Stored only on the lead record; never copied into logs, URLs, or analytics.</td></tr>
+  <tr><td>S2</td><td>Sensitive fields protected at rest</td><td>Neon Postgres encrypted at rest by default. No extra field-level encryption for MVP (internal single-user tool).</td></tr>
+</table>
+
+<h2>2. Authentication and Authorization</h2>
+<table>
+  <tr><th>#</th><th>Item</th><th>How addressed</th></tr>
+  <tr><td>S3</td><td>Auth checks on ALL protected routes, not just UI guards</td><td>Middleware redirects unauthenticated page visits; every Server Action and Route Handler calls <code>requireSession()</code> first.</td></tr>
+  <tr><td>S4</td><td>Authorization checked server-side</td><td>Single-user: the only check is a valid session. No client-supplied roles or IDs trusted.</td></tr>
+  <tr><td>S5</td><td>Session handling</td><td>Signed JWT in httpOnly + Secure + SameSite cookie; secret from env; reasonable expiry; logout clears the cookie.</td></tr>
+  <tr><td>S6</td><td>Credential verification</td><td>bcrypt hash comparison (never plaintext); generic "invalid credentials" message; timing-safe compare.</td></tr>
+</table>
+
+<h2>3. Input Validation and Output Encoding</h2>
+<table>
+  <tr><th>#</th><th>Item</th><th>How addressed</th></tr>
+  <tr><td>S7</td><td>All inputs validated with Zod before business logic</td><td>Login form, CSV rows, lead create/edit, notes, search/filter/pagination params, upload metadata.</td></tr>
+  <tr><td>S8</td><td>Output encoding / XSS</td><td>React escaping by default; no <code>dangerouslySetInnerHTML</code>; CSV-sourced strings treated as untrusted text.</td></tr>
+  <tr><td>S9</td><td>File upload validation</td><td>Server checks MIME type, extension, and size cap before forwarding to Frappe; rejects executables.</td></tr>
+</table>
+
+<h2>4. Secrets and Injection</h2>
+<table>
+  <tr><th>#</th><th>Item</th><th>How addressed</th></tr>
+  <tr><td>S10</td><td>No secrets in source code or chat</td><td>DB URL, Frappe token, session secret, credentials all from env vars. Frappe token never leaves the server.</td></tr>
+  <tr><td>S11</td><td>Secrets excluded from version control</td><td><code>.env*</code> in <code>.gitignore</code> (verify); Vercel env vars set via dashboard; sample values only in <code>.env.example</code>.</td></tr>
+  <tr><td>S12</td><td>Parameterized queries only</td><td>Drizzle ORM parameterizes all queries; no raw SQL with string interpolation.</td></tr>
+  <tr><td>S13</td><td>CSV formula injection</td><td>Lead fields are displayed in the app, not re-exported to spreadsheets in MVP; revisit if CSV export is added.</td></tr>
+</table>
+
+<h2>5. Transport and Storage</h2>
+<table>
+  <tr><th>#</th><th>Item</th><th>How addressed</th></tr>
+  <tr><td>S14</td><td>HTTPS enforced in all non-local environments</td><td>Vercel provides HTTPS by default; Secure cookies set.</td></tr>
+  <tr><td>S15</td><td>Data not retained beyond necessity</td><td>Delete removes lead + notes + events. No backups-retention policy needed for MVP beyond Neon's defaults.</td></tr>
+</table>
+
+<h2>6. Rate Limiting and Error Messages</h2>
+<table>
+  <tr><th>#</th><th>Item</th><th>How addressed</th></tr>
+  <tr><td>S16</td><td>Rate limiting on login</td><td>OPEN (architecture O3): DB-backed attempt throttling proposed; confirm approach in Phase 3 Milestone 1.</td></tr>
+  <tr><td>S17</td><td>Error messages do not leak internals</td><td>Generic user-facing messages; detailed errors server-logged only; no stack traces to the client.</td></tr>
+  <tr><td>S18</td><td>Logs free of secrets and unnecessary PII</td><td>Log action + lead id + timestamp only; review log lines before deploy.</td></tr>
+</table>
+
+</body>
+</html>

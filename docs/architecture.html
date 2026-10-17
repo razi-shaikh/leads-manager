@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Architecture — Bike Purchase Leads Management System</title>
+<style>
+  body { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+         line-height: 1.6; color: #1a1a1a; max-width: 880px; margin: 0 auto;
+         padding: 2rem 1.25rem 4rem; }
+  h1 { font-size: 1.75rem; border-bottom: 2px solid #1a1a1a; padding-bottom: .5rem; }
+  h2 { font-size: 1.25rem; margin-top: 2.5rem; border-bottom: 1px solid #ddd; padding-bottom: .25rem; }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: .95rem; }
+  th, td { border: 1px solid #ccc; padding: .5rem .75rem; text-align: left; vertical-align: top; }
+  th { background: #f2f2f2; }
+  code { background: #f2f2f2; padding: .1rem .35rem; border-radius: 4px; font-size: .9em; }
+  pre { background: #f2f2f2; padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: .88rem; }
+  .meta { color: #555; font-size: .95rem; }
+  ul.tight li, ol.tight li { margin-bottom: .25rem; }
+</style>
+</head>
+<body>
+
+<h1>System Architecture — Bike Purchase Leads Management System (MVP)</h1>
+<p class="meta">Version: Draft for review &nbsp;|&nbsp; Date: 2026-10-17<br>
+Companion to <code>docs/prd.html</code>. Stack choices marked PROPOSED need user confirmation.</p>
+
+<h2>1. Tech Stack</h2>
+<table>
+  <tr><th>Layer</th><th>Choice</th><th>Notes</th></tr>
+  <tr><td>Frontend + backend</td><td>Next.js 16 App Router, React 19, TypeScript</td><td>Already in repo; deployed on Vercel (Neon-recommended pairing).</td></tr>
+  <tr><td>Styling</td><td>Tailwind CSS v4</td><td>Already in repo; design tokens via CSS variables.</td></tr>
+  <tr><td>UI components + icons</td><td>shadcn/ui + lucide-react</td><td>CLI-installed primitives; semantic tokens only; see design.html §7–§8.</td></tr>
+  <tr><td>Database</td><td>Neon (Lakebase Postgres), pooled <code>DATABASE_URL</code></td><td>Confirmed in Phase 1. Pooled connection for serverless traffic.</td></tr>
+  <tr><td>ORM / migrations</td><td>Drizzle ORM + Drizzle Kit (PROPOSED)</td><td>Lightweight, serverless-friendly, SQL-first. See decision D2.</td></tr>
+  <tr><td>API style</td><td>Server Actions + Route Handlers (PROPOSED)</td><td>No tRPC for MVP; single-user internal app. See decision D3.</td></tr>
+  <tr><td>Auth</td><td>Env credentials + signed httpOnly cookie session (PROPOSED)</td><td>Single fixed user; session signed with <code>jose</code>, enforced in middleware. See D4.</td></tr>
+  <tr><td>Validation</td><td>Zod schemas on every server input</td><td>CSV rows, forms, route params.</td></tr>
+  <tr><td>CSV parsing</td><td>Papa Parse, server-side (PROPOSED)</td><td>Runs in a Route Handler; never trust client-parsed rows.</td></tr>
+  <tr><td>Photo storage</td><td>Frappe <code>upload_file</code> API (server-side only)</td><td>Token in env vars; browser never sees it.</td></tr>
+  <tr><td>Hosting</td><td>Vercel</td><td>Confirmed in Phase 1. Preview deploys per branch.</td></tr>
+</table>
+
+<h2>2. System Boundaries and Data Flow</h2>
+<pre>Browser (login, dashboard, all-leads, pipeline pages)
+  │  Server Actions / fetch to Route Handlers (same Next.js app)
+  ▼
+[Auth guard]  requireSession() — every protected action/route/page.
+  │  Rejects unauthenticated requests before any business logic.
+  ▼
+[Service layer]  server-only modules — the ONLY code importing the DB client.
+  │  Leads, notes, history, import, photos, dashboard stats.
+  ▼
+[Neon Postgres]  tables: leads, lead_notes, lead_events
+  │
+  ├──► [Frappe upload_file]  server-side photo uploads only (scope: Home/LeadManager)
+
+CSV photos: used as remote URLs directly in the carousel (see open decision O2).</pre>
+
+<h2>3. External Services and Contracts</h2>
+<table>
+  <tr><th>Service</th><th>Contract</th></tr>
+  <tr><td>Frappe <code>POST /api/method/upload_file</code></td><td>Multipart <code>file</code> + <code>folder="Home/LeadManager"</code>; header <code>Authorization: token &lt;key&gt;:&lt;secret&gt;</code> from env. Returns file URL stored on the lead. Called only from a Route Handler; failures surface as a clear error with no partial lead update.</td></tr>
+  <tr><td>Neon Postgres</td><td>Standard Postgres wire protocol over pooled <code>DATABASE_URL</code> (env). Schema managed by Drizzle Kit migrations in the repo.</td></tr>
+</table>
+
+<h2>4. Trust Boundaries and Authorization</h2>
+<ul class="tight">
+  <li>Boundary 1 — browser vs server: all auth checks run server-side (middleware + <code>requireSession()</code>). UI hiding is never the enforcement.</li>
+  <li>Boundary 2 — server vs secrets: Frappe token, DB URL, and login credentials live in env vars; none is ever sent to the browser or logged.</li>
+  <li>Single-user model: authentication (logged in?) is the only gate; there are no roles, orgs, or per-record permissions in MVP.</li>
+</ul>
+
+<h2>5. Error Handling and Logging Strategy</h2>
+<ul class="tight">
+  <li>Server actions/handlers return typed results (<code>{ ok, data | error }</code>); unexpected exceptions are caught, logged server-side, and shown to the user as a generic message.</li>
+  <li>Client shows failures via error toasts with a retry path; empty states explain the next action.</li>
+  <li>LOGGED: action name, lead id, timestamp, error code/message. NEVER LOGGED: passwords, tokens, session cookies, customer phone/email contents, stack traces to the client.</li>
+</ul>
+
+<h2>6. Persistence and Migration Strategy</h2>
+<ul class="tight">
+  <li>Schema defined in Drizzle; migrations generated with Drizzle Kit and committed to the repo.</li>
+  <li>Tables (proposed): <code>leads</code> (all CSV + card fields, status enum, source, duplicate flag, photo URL list, timestamps), <code>lead_notes</code> (lead id, text, created_at), <code>lead_events</code> (lead id, type=status_change|note|edit|import, from/to, created_at) powering the history timeline.</li>
+  <li>Status stored as a Postgres enum of the six values; transitions are unrestricted in MVP (any status from the dropdown).</li>
+  <li>Dev safety: use a Neon branch database for local development; production branch only from Vercel prod env.</li>
+</ul>
+
+<h2>7. Deployment</h2>
+<ul class="tight">
+  <li>Environments: local dev (Neon branch DB) → Vercel preview (per PR, branch DB) → Vercel production (production DB).</li>
+  <li>CI/CD: Vercel Git integration; every push builds (<code>tsc --noEmit</code>, ESLint, <code>next build</code>) before deploy.</li>
+  <li>Env vars per environment: <code>DATABASE_URL</code>, <code>APP_USERNAME</code>, <code>APP_PASSWORD_HASH</code>, <code>SESSION_SECRET</code>, <code>FRAPPE_UPLOAD_URL</code>, <code>FRAPPE_API_KEY</code>, <code>FRAPPE_API_SECRET</code>.</li>
+</ul>
+
+<h2>8. Test Strategy</h2>
+<table>
+  <tr><th>Level</th><th>Tool / approach</th><th>Coverage expectation</th></tr>
+  <tr><td>Type + lint gates</td><td><code>tsc --noEmit</code>, ESLint (incl. server-only rule)</td><td>Must pass before every handover; part of Vercel build.</td></tr>
+  <tr><td>Unit</td><td>Vitest (PROPOSED) for pure logic</td><td>CSV row parsing/validation, duplicate detection, status helpers.</td></tr>
+  <tr><td>Integration</td><td>Manual + seed script against Neon branch</td><td>Import → counts → status move → notes → history → edit → delete.</td></tr>
+  <tr><td>E2E</td><td>Manual checklist only for MVP (PROPOSED)</td><td>PRD section 8 acceptance criteria; no Playwright until post-MVP churn settles.</td></tr>
+</table>
+
+<h2>9. Consequential Decisions and Trade-offs</h2>
+<table>
+  <tr><th>ID</th><th>Decision</th><th>Choice</th><th>Reason</th><th>Trade-off</th></tr>
+  <tr><td>D1</td><td>Lead data store</td><td>Neon Postgres, not Frappe/ERPNext</td><td>User decision in Phase 1; Frappe is photos-only.</td><td>Two systems to operate (DB + file API).</td></tr>
+  <tr><td>D2</td><td>ORM</td><td>Drizzle (PROPOSED) over Prisma</td><td>Lighter, serverless-native, less codegen for a 3-table schema.</td><td>Guardrail templates assume Prisma; SOT-type derivation pattern still applies.</td></tr>
+  <tr><td>D3</td><td>API style</td><td>Server Actions + Route Handlers (PROPOSED), no tRPC</td><td>Single-user internal app; tRPC's client + procedure layer is overhead.</td><td>No end-to-end typed client; layering enforced by convention + ESLint instead of procedures.</td></tr>
+  <tr><td>D4</td><td>Auth</td><td>Env credentials + signed cookie (PROPOSED), no user table</td><td>Exactly matches "single fixed login"; Neon Auth/Better Auth would add tables and flows for one user.</td><td>Adding a second user later requires an auth rework (accepted: very low chance).</td></tr>
+  <tr><td>D5</td><td>Password storage</td><td>bcrypt hash in env, timing-safe compare (PROPOSED)</td><td>Plaintext password must never sit in env or code.</td><td>User must generate the hash once during setup.</td></tr>
+  <tr><td>D6</td><td>Component library</td><td>shadcn/ui + lucide-react (CONFIRMED by user)</td><td>Accessible, composable primitives; consistent minimal aesthetic; CLI-managed source in repo.</td><td>More initial setup (init + add per component); status colors need custom Badge variants.</td></tr>
+</table>
+
+<h2>10. Open Decisions</h2>
+<table>
+  <tr><th>#</th><th>Item</th></tr>
+  <tr><td>O1</td><td>Confirm PROPOSED choices D2–D5, or substitute (Prisma / tRPC / Playwright). D6 (shadcn + lucide) already CONFIRMED by user.</td></tr>
+  <tr><td>O2</td><td>CSV photo URLs: use directly (current plan) vs server fetch-and-re-upload to Frappe for durability. Direct use is simpler; re-upload guards against dead source links but adds failure modes.</td></tr>
+  <tr><td>O3</td><td>Login rate limiting approach on serverless (DB-backed attempt log vs accept risk for an internal single-user tool).</td></tr>
+</table>
+
+</body>
+</html>

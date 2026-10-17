@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PRD — Bike Purchase Leads Management System (MVP)</title>
+<style>
+  :root { color-scheme: light; }
+  body { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+         line-height: 1.6; color: #1a1a1a; max-width: 880px; margin: 0 auto;
+         padding: 2rem 1.25rem 4rem; }
+  h1 { font-size: 1.75rem; border-bottom: 2px solid #1a1a1a; padding-bottom: .5rem; }
+  h2 { font-size: 1.25rem; margin-top: 2.5rem; border-bottom: 1px solid #ddd; padding-bottom: .25rem; }
+  h3 { font-size: 1.05rem; margin-top: 1.5rem; }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: .95rem; }
+  th, td { border: 1px solid #ccc; padding: .5rem .75rem; text-align: left; vertical-align: top; }
+  th { background: #f2f2f2; }
+  code { background: #f2f2f2; padding: .1rem .35rem; border-radius: 4px; font-size: .9em; }
+  .meta { color: #555; font-size: .95rem; }
+  .status-new { font-weight: bold; }
+  ul.tight li, ol.tight li { margin-bottom: .25rem; }
+</style>
+</head>
+<body>
+
+<h1>Product Requirements — Bike Purchase Leads Management System (MVP)</h1>
+<p class="meta">Project: F3 Motor &nbsp;|&nbsp; Version: Draft for review &nbsp;|&nbsp; Date: 2026-10-17<br>
+Source: Phase 1 planning discussion. No code exists for these features yet.</p>
+
+<h2>1. Problem Statement</h2>
+<p>F3 Motor receives bike-purchase leads from multiple sources — its own website
+(BikeBecho.com), Bike4Sale, and Facebook. Today there is no single system to collect,
+view, qualify, follow up on, and close these leads. The result is scattered lead data
+and no consistent workflow from first contact to final outcome.</p>
+
+<h2>2. Target User</h2>
+<p>A single internal F3 Motor user who imports leads daily and works them end to end.
+MVP has one login only; no multi-user accounts and no roles.</p>
+
+<h2>3. Core User Journeys</h2>
+
+<h3>J1 — Daily lead import</h3>
+<ol class="tight">
+  <li>User logs in with the single set of credentials.</li>
+  <li>User uploads a CSV file of new leads.</li>
+  <li>System creates every row as a lead with status <span class="status-new">New Lead</span>,
+      tagging rows whose Phone + Registration No. already exist as duplicates (still created, never skipped).</li>
+  <li>User sees the new leads on the Dashboard counts and in All Leads.</li>
+</ol>
+
+<h3>J2 — Morning triage</h3>
+<ol class="tight">
+  <li>User opens the Dashboard and sees total counts grouped by status plus how many
+      new leads arrived today, optionally filtered by lead source.</li>
+  <li>User opens All Leads, scans the new cards (photo carousel, bike details, price, contact),
+      and uses search (name, phone, reg no.) and filters (status, source) to find specific leads.</li>
+</ol>
+
+<h3>J3 — Qualify and follow up</h3>
+<ol class="tight">
+  <li>From All Leads or Pipeline, user changes a promising lead's status from the card dropdown
+      (<span class="status-new">New Lead → Qualified → Follow-up</span>). Not all leads are qualified.</li>
+  <li>In Follow-up, user contacts the customer and records notes (plain text with timestamps).</li>
+</ol>
+
+<h3>J4 — Negotiate and close</h3>
+<ol class="tight">
+  <li>User moves the lead to <span class="status-new">Negotiation</span>, then to a final outcome:
+      <span class="status-new">Closed Won</span> or <span class="status-new">Closed Lost</span>.</li>
+  <li>User opens View History to see the full timeline of status changes and notes.</li>
+</ol>
+
+<h3>J5 — Lead maintenance</h3>
+<ol class="tight">
+  <li>User edits any field of a lead when details change.</li>
+  <li>User deletes leads that should not be kept.</li>
+  <li>User uploads additional bike photos to a lead when needed.</li>
+</ol>
+
+<h2>4. Functional Requirements</h2>
+<p>Each requirement is written as a testable behavior.</p>
+
+<h3>Authentication (FR-A)</h3>
+<table>
+  <tr><th>ID</th><th>Behavior</th></tr>
+  <tr><td>FR-A1</td><td>When valid credentials are submitted on the login page, the system grants access to all pages.</td></tr>
+  <tr><td>FR-A2</td><td>When invalid credentials are submitted, the system denies access and shows an error without revealing which part was wrong.</td></tr>
+  <tr><td>FR-A3</td><td>When an unauthenticated visitor requests any page except login, the system redirects to login.</td></tr>
+  <tr><td>FR-A4</td><td>The username and password are read from environment variables; no credential appears in source code.</td></tr>
+</table>
+
+<h3>CSV Import (FR-I)</h3>
+<table>
+  <tr><th>ID</th><th>Behavior</th></tr>
+  <tr><td>FR-I1</td><td>When a CSV is uploaded, the system creates one lead per row from whichever recognized columns are present (all columns optional; missing fields stay blank), each with status New Lead.</td></tr>
+  <tr><td>FR-I2</td><td>When a row's Phone + Registration No. matches an existing lead, the system still creates the lead and tags it as a duplicate.</td></tr>
+  <tr><td>FR-I3</td><td>When the upload finishes, the system reports how many leads were created and how many were tagged as duplicates.</td></tr>
+  <tr><td>FR-I4</td><td>When a CSV has no recognized columns, is unreadable, or has malformed rows, the system rejects it with a clear error and creates nothing.</td></tr>
+</table>
+<p>Recognized CSV columns (all optional, any order; unknown columns ignored): <code>ID, Lead Source, Date, Customer Name, Phone, Email,
+Brand &amp; Model, Reg No., Year, Bike Photo (Multiple photos), KM Driven,
+No. of Owners, Location, Expected Price</code>.</p>
+
+<h3>Dashboard (FR-D)</h3>
+<table>
+  <tr><th>ID</th><th>Behavior</th></tr>
+  <tr><td>FR-D1</td><td>When the Dashboard loads, it shows the total lead count grouped by each of the six statuses.</td></tr>
+  <tr><td>FR-D2</td><td>When the Dashboard loads, it shows how many new leads were added today.</td></tr>
+  <tr><td>FR-D3</td><td>When the user picks a lead source filter (BikeBecho.com, Bike4Sale, Facebook, or All), all counts update to that scope.</td></tr>
+</table>
+
+<h3>All Leads (FR-L)</h3>
+<table>
+  <tr><th>ID</th><th>Behavior</th></tr>
+  <tr><td>FR-L1</td><td>When All Leads loads, it displays leads as cards, 50 per page, with pagination controls.</td></tr>
+  <tr><td>FR-L2</td><td>When the user types in the search box, results narrow to leads matching name, phone, or registration no.</td></tr>
+  <tr><td>FR-L3</td><td>When the user sets the status filter, only leads with that status are shown.</td></tr>
+  <tr><td>FR-L4</td><td>When the user sets the source filter, only leads from that source are shown.</td></tr>
+  <tr><td>FR-L5</td><td>Only card view exists in MVP; no table view.</td></tr>
+</table>
+
+<h3>Pipeline (FR-P)</h3>
+<table>
+  <tr><th>ID</th><th>Behavior</th></tr>
+  <tr><td>FR-P1</td><td>When the Pipeline page loads, it shows status tabs for Qualified, Follow-up, Negotiation, Closed Won, and Closed Lost (no New Lead tab).</td></tr>
+  <tr><td>FR-P2</td><td>When the Pipeline page loads, the Qualified tab is selected by default.</td></tr>
+  <tr><td>FR-P3</td><td>When the user clicks a status tab, the page shows that status's leads as cards with the same search, filters (source), and pagination (50/page) as All Leads.</td></tr>
+</table>
+
+<h3>Lead Card and Actions (FR-C)</h3>
+<table>
+  <tr><th>ID</th><th>Behavior</th></tr>
+  <tr><td>FR-C1</td><td>Every card shows an image carousel at the top, then brand &amp; model, registration no., year, KM driven, owners, location, expected price, customer name, phone, and email.</td></tr>
+  <tr><td>FR-C2</td><td>Every card shows a color-coded status tag for its current status.</td></tr>
+  <tr><td>FR-C3</td><td>When the user picks a new status from the card dropdown (on any page), the lead's status updates immediately and the change is recorded in history.</td></tr>
+  <tr><td>FR-C4</td><td>When the user edits a lead, every field is editable and changes persist.</td></tr>
+  <tr><td>FR-C5</td><td>When the user confirms deletion, the lead and its notes/history are removed.</td></tr>
+</table>
+
+<h3>Notes and History (FR-N)</h3>
+<table>
+  <tr><th>ID</th><th>Behavior</th></tr>
+  <tr><td>FR-N1</td><td>When the user adds a note, it is stored as plain text with a timestamp.</td></tr>
+  <tr><td>FR-N2</td><td>When the user opens View History, they see a timeline of all status changes and notes in chronological order.</td></tr>
+</table>
+
+<h3>Photos (FR-M)</h3>
+<table>
+  <tr><th>ID</th><th>Behavior</th></tr>
+  <tr><td>FR-M1</td><td>When a CSV row contains photo URLs, the card carousel displays those photos.</td></tr>
+  <tr><td>FR-M2</td><td>When the user uploads photo files to a lead, the files are stored via the Frappe upload API and appear in the carousel.</td></tr>
+  <tr><td>FR-M3</td><td>The Frappe API token is read from environment variables; it never appears in source code or client-side bundles.</td></tr>
+</table>
+
+<h2>5. Non-Functional Requirements</h2>
+<table>
+  <tr><th>ID</th><th>Requirement</th></tr>
+  <tr><td>NFR-1</td><td>Performance: lead list pages render 50 cards per page without perceptible lag on a normal broadband connection.</td></tr>
+  <tr><td>NFR-2</td><td>Reliability: a failed CSV import or photo upload leaves no partial lead data and reports the failure clearly.</td></tr>
+  <tr><td>NFR-3</td><td>Privacy: customer phone numbers and emails are visible only to the logged-in user; they are never logged or exposed in URLs.</td></tr>
+  <tr><td>NFR-4</td><td>Usability: the interface is clean, minimal, and professional; core flows (import → triage → status change → note) need no training beyond a walkthrough.</td></tr>
+  <tr><td>NFR-5</td><td>Portability: all configuration that varies by environment (credentials, tokens, database URL) comes from environment variables.</td></tr>
+</table>
+
+<h2>6. MVP Scope</h2>
+<table>
+  <tr><th>In scope</th><th>Explicitly out of scope</th></tr>
+  <tr><td>Single-user login (env-var credentials)</td><td>Multi-user accounts and role-based assignment</td></tr>
+  <tr><td>CSV lead import with duplicate tagging</td><td>Any other import format</td></tr>
+  <tr><td>Dashboard, All Leads, Pipeline pages</td><td>Table view (future addition)</td></tr>
+  <tr><td>Card view: carousel, details, status tag, dropdown</td><td>—</td></tr>
+  <tr><td>Notes (text + timestamp), history timeline</td><td>—</td></tr>
+  <tr><td>Edit-all and delete</td><td>—</td></tr>
+  <tr><td>Photo URLs + file uploads via Frappe API</td><td>—</td></tr>
+  <tr><td>Neon PostgreSQL storage; Vercel deployment</td><td>—</td></tr>
+</table>
+
+<h2>7. Observable Success Measures</h2>
+<ol class="tight">
+  <li>Existing CSV leads import successfully and are viewable as cards with correct details and photos.</li>
+  <li>The single user can run the system daily end to end: import → triage → qualify → follow up → close, with notes and history.</li>
+  <li>Every lead can move through New Lead → Qualified → Follow-up → Negotiation → Closed Won / Closed Lost from the card dropdown on any page.</li>
+</ol>
+
+<h2>8. Acceptance Criteria — First End-to-End Outcome</h2>
+<ol class="tight">
+  <li>User logs in with the env-var credentials.</li>
+  <li>User uploads the sample CSV; all rows appear as New Lead cards with correct data and duplicate tags where applicable.</li>
+  <li>Dashboard shows correct per-status counts and today's new-lead count.</li>
+  <li>User moves one lead through every status to Closed Won from card dropdowns; each change appears in that lead's history with notes added along the way.</li>
+  <li>User edits a field, uploads a photo, and deletes a test lead successfully.</li>
+</ol>
+
+<h2>9. Open Decisions and Assumptions</h2>
+<table>
+  <tr><th>#</th><th>Item</th><th>Type</th></tr>
+  <tr><td>1</td><td>Sample CSV file has not been shared yet; the 14-column list in section 4 is the import contract until the real file is verified during build.</td><td>Open</td></tr>
+  <tr><td>2</td><td>Separator/format of multiple photo URLs inside the CSV photo column is unknown; assumed comma-separated until the sample is seen.</td><td>Assumption</td></tr>
+  <tr><td>3</td><td>Date format of the CSV Date column is unknown; to be confirmed from the sample.</td><td>Open</td></tr>
+  <tr><td>4</td><td>No special accessibility requirements beyond standard practice.</td><td>Assumption</td></tr>
+  <tr><td>5</td><td>No fixed timeline or budget constraints were stated.</td><td>Assumption</td></tr>
+  <tr><td>6</td><td>Multi-user support has a very low chance of being needed; the design will not pre-build for it.</td><td>Decision</td></tr>
+</table>
+
+</body>
+</html>

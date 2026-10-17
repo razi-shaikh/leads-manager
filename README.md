@@ -1,36 +1,75 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Leads Manager — F3 Motor
 
-## Getting Started
+Single-user bike-purchase leads management: daily CSV import, dashboard,
+card-based All Leads and Pipeline, status workflow (New → Qualified →
+Follow-up → Negotiation → Closed Won/Lost), notes, history, edit/delete,
+and bike photos (CSV URLs + Frappe uploads).
 
-First, run the development server:
+Stack: Next.js 16 (App Router) · React 19 · Tailwind v4 · shadcn/ui ·
+Drizzle ORM · Neon Postgres · Vercel. See `docs/*.html` for PRD,
+architecture, design, security, tasks, and memory.
+
+## Local setup
+
+Prerequisites: Node 20+, a Neon Postgres database.
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Fill in `.env.local` (all values; never commit this file):
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+| Variable | Where from |
+|---|---|
+| `DATABASE_URL` | Neon dashboard or `npx neon env pull` (pooled URL) |
+| `APP_USERNAME` | Your login name, e.g. `f3motors` |
+| `APP_PASSWORD_HASH` | bcrypt hash of the password (see below) |
+| `SESSION_SECRET` | Random 32+ byte hex string |
+| `FRAPPE_UPLOAD_URL` | `https://<host>/api/method/upload_file` |
+| `FRAPPE_API_KEY` / `FRAPPE_API_SECRET` | Frappe API token pair |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+NOTE: in local `.env` files, escape every `$` in the bcrypt hash as `\$`
+(Next.js expands `$VAR` otherwise, silently emptying the value).
+Vercel dashboard values are literal — no escaping needed there.
 
-## Learn More
+Generate the password hash:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+node -e "console.log(require('bcryptjs').hashSync('YOUR_PASSWORD', 10))"
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Then migrate, seed sample data, and run:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+npm run db:migrate
+npm run db:seed        # optional: 3 sample leads
+npm run dev            # http://localhost:3000
+```
 
-## Deploy on Vercel
+## Scripts
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+| Command | Purpose |
+|---|---|
+| `npm run dev` / `build` / `start` | Develop, production build, serve build |
+| `npm run db:migrate` | Apply committed `./drizzle` migrations |
+| `npm run db:seed` | Insert 3 sample leads |
+| `npm test` | Unit tests (CSV parsing) |
+| `npm run lint` | ESLint (includes service-layer DB rule) |
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Gates before any handover: `npx tsc --noEmit`, `npm run lint`, `npm test`.
+
+## Deploying to Vercel
+
+1. Push this repo to GitHub and import it in Vercel.
+2. Add the same 7 env vars in the Vercel dashboard (production scope).
+   Use the **production** Neon branch URL and **unescaped** hash values.
+3. Run migrations against production once:
+   `DATABASE_URL="<prod-url>" npm run db:migrate`
+4. Deploy. The build runs typecheck, lint, and tests via `next build`.
+
+## Docs
+
+Open in a browser: `docs/prd.html`, `docs/architecture.html`,
+`docs/design.html`, `docs/security.html`, `docs/tasks.html`,
+`docs/memory.html`. Agent rules: `AGENTS.md`, `claude/claude.md`.

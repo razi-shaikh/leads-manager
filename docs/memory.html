@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Project Memory — Bike Purchase Leads Management System</title>
+<style>
+  body { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+         line-height: 1.6; color: #1a1a1a; max-width: 880px; margin: 0 auto;
+         padding: 2rem 1.25rem 4rem; }
+  h1 { font-size: 1.75rem; border-bottom: 2px solid #1a1a1a; padding-bottom: .5rem; }
+  h2 { font-size: 1.25rem; margin-top: 2.5rem; border-bottom: 1px solid #ddd; padding-bottom: .25rem; }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: .95rem; }
+  th, td { border: 1px solid #ccc; padding: .5rem .75rem; text-align: left; vertical-align: top; }
+  th { background: #f2f2f2; }
+  code { background: #f2f2f2; padding: .1rem .35rem; border-radius: 4px; font-size: .9em; }
+  .meta { color: #555; font-size: .95rem; }
+  ul.tight li { margin-bottom: .25rem; }
+</style>
+</head>
+<body>
+
+<h1>Project Memory — Bike Purchase Leads Management System</h1>
+<p class="meta">Updated: 2026-10-17 &nbsp;|&nbsp; Update this file at every meaningful milestone.
+Never invent prior decisions or report unverified progress.</p>
+
+<h2>1. Current Goal and Agreed Scope</h2>
+<p>MVP BUILT and verified end to end: single-user bike-purchase leads manager —
+CSV import, Dashboard, All Leads, Pipeline, card actions (status/notes/history/edit/delete),
+photos via CSV URLs + Frappe uploads. Out of scope as agreed: table view, multi-user/roles.
+Remaining user steps: permanent Neon DB, real CSV check, Vercel deploy (see §7).</p>
+
+<h2>2. Architecture and Security Decisions</h2>
+<table>
+  <tr><th>Decision</th><th>Reason</th><th>Date</th></tr>
+  <tr><td>Neon Postgres for lead data; Frappe API photos-only</td><td>User requirement (Phase 1).</td><td>2026-10-17</td></tr>
+  <tr><td>Vercel hosting</td><td>User requirement (Phase 1).</td><td>2026-10-17</td></tr>
+  <tr><td>Single fixed login, no user table (PROPOSED)</td><td>Exactly matches single-user MVP; see architecture D4.</td><td>2026-10-17</td></tr>
+  <tr><td>Drizzle over Prisma (PROPOSED)</td><td>Lighter for a 3-table serverless schema; see D2.</td><td>2026-10-17</td></tr>
+  <tr><td>Server Actions + Route Handlers, no tRPC (PROPOSED)</td><td>Less overhead for single-user internal app; see D3.</td><td>2026-10-17</td></tr>
+  <tr><td>bcrypt hash in env, not plaintext password (PROPOSED)</td><td>Secrets hygiene; see D5.</td><td>2026-10-17</td></tr>
+  <tr><td>shadcn/ui + lucide-react for all UI (CONFIRMED)</td><td>User change request; reverses proposed D6. Semantic tokens, Badge status variants.</td><td>2026-10-17</td></tr>
+  <tr><td>All secrets in env vars; Frappe token server-only</td><td>Security checklist S10–S11.</td><td>2026-10-17</td></tr>
+  <tr><td>planning-with-files tracks process; guardrail HTML docs are deliverables</td><td>User asked to use the skill within Phase 2.</td><td>2026-10-17</td></tr>
+  <tr><td>PROPOSED stack (D2–D5) adopted during autonomous Phase 3</td><td>User said "move to phase 3" + "unblock yourself"; Drizzle, Server Actions, env-credential session, bcrypt hash, manual E2E as proposed.</td><td>2026-10-17</td></tr>
+  <tr><td>Auth gate in src/proxy.ts (not middleware.ts)</td><td>Next.js 16 renamed middleware to proxy; verified in node_modules/next/dist/docs.</td><td>2026-10-17</td></tr>
+  <tr><td>export const instant = false on root layout</td><td>Fully dynamic authed app; opts out of static-shell validation so build passes.</td><td>2026-10-17</td></tr>
+  <tr><td>Claimable Neon project for dev (expires 2026-10-20)</td><td>No Neon account/CLI auth available; claimable path per neon skill. Prod needs a permanent project.</td><td>2026-10-17</td></tr>
+  <tr><td>Bcrypt $ escaped as \$ in local .env files</td><td>Next.js dotenv-expand empties unescaped $ hashes (verified); Vercel values stay literal.</td><td>2026-10-17</td></tr>
+  <tr><td>In-memory login throttle (5/10min per IP)</td><td>Resolves O3/S16 for MVP; weak on serverless (per-instance), accepted for internal tool.</td><td>2026-10-17</td></tr>
+</table>
+
+<h2>3. Verified Repository Facts</h2>
+<table>
+  <tr><th>Path</th><th>What it is (confirmed by inspection)</th></tr>
+  <tr><td><code>src/app/layout.tsx</code></td><td>Root layout, Geist fonts.</td></tr>
+  <tr><td><code>src/app/page.tsx</code></td><td>Minimal "Leads Manager" placeholder.</td></tr>
+  <tr><td><code>src/app/globals.css</code></td><td>Tailwind v4 import only.</td></tr>
+  <tr><td><code>src/app/favicon.ico</code></td><td>Default Next.js favicon.</td></tr>
+  <tr><td><code>public/</code></td><td>Empty (boilerplate SVGs deleted).</td></tr>
+  <tr><td><code>docs/*.html</code></td><td>Phase 2 deliverables: prd, architecture, design, security, tasks, memory.</td></tr>
+  <tr><td><code>claude/claude.md</code></td><td>AI orchestrator file.</td></tr>
+  <tr><td><code>AGENTS.md</code></td><td>Concise agent guide (Next.js block + project rules, under 100 lines).</td></tr>
+  <tr><td><code>.planning/phase-2-docs/</code></td><td>planning-with-files tracker (task_plan, findings, progress).</td></tr>
+</table>
+
+<h2>4. Completed Tasks and Results</h2>
+<table>
+  <tr><th>Task</th><th>Result</th><th>Test output</th></tr>
+  <tr><td>Boilerplate cleanup</td><td>Done: globals.css stripped, SVGs deleted, minimal page.tsx.</td><td><code>npm run build</code> passed (2026-10-14).</td></tr>
+  <tr><td>Phase 1 planning</td><td>Done: 4 rounds completed, plan summarized and approved.</td><td>N/A (discussion).</td></tr>
+  <tr><td>Skill installs</td><td>Done: 7 skills installed (impeccable substituted for missing colorize).</td><td>Verified in <code>~/.agents/skills/</code>.</td></tr>
+  <tr><td>Phase 2 docs batch</td><td>Done: all 6 HTML docs + claude.md + AGENTS.md written.</td><td>Awaiting user review; no code changes.</td></tr>
+  <tr><td>Change: shadcn + lucide</td><td>Done: shadcn skill installed; D6 reversed to CONFIRMED; arch/design/tasks/memory/claude/AGENTS updated.</td><td>Awaiting user review.</td></tr>
+  <tr><td>Phase 3 build (M1–M4)</td><td>Done: auth, schema, services, all pages, import, notes/history/edit/delete, Frappe uploads. tsc/eslint/vitest/build green.</td><td>Unit 4/4; render 11/11; browser E2E 12/12 + dup/tabs/filters/search + final gaps (bad login, malformed CSV, full 5-step chain, logout) all verified.</td></tr>
+  <tr><td>Change: optional CSV columns</td><td>Done: all 14 columns optional; imports present fields, ignores missing/unknown ones; rejects only files with zero recognized columns. Old strict test replaced (requirement changed by user).</td><td>Unit 9/9; tsc/eslint clean.</td></tr>
+  <tr><td>Change: OLX compact cards</td><td>Done: 5-col grid, 95% layout, compact card (price/year-km/name/location/date), heart favorite + featured flag (new columns, migration 0001), click-to-detail dialog preserving all actions.</td><td>Unit 7/7; browser verified: 259×296px cards, fav persists, FEATURED badge, dialog actions, status change, cleanup.</td></tr>
+</table>
+
+<h2>5. Known Risks and Blockers</h2>
+<ul class="tight">
+  <li>Production Neon DB is LIVE (ep-red-flower-aopevnj4, ap-southeast-1 — region supports all Neon services). Tables created 2026-10-17, starting empty. Claimable dev DB (small-darkness-70029303) is superseded; it expires 2026-10-20 with nothing of value on it.</li>
+  <li>Sample CSV still not shared — comma-separated photo URLs and flexible date parsing are assumptions until the real file is imported.</li>
+  <li>One E2E test file (leadmanager-e2e-test.png, 1px) was uploaded to Frappe Home/LeadManager during verification; safe to delete there.</li>
+  <li>Touch targets are dense ops-UI size (28–32px), below the 44px guideline in design.html §3 — accepted deviation for an internal desktop-first tool.</li>
+  <li>Pagination UI is code-reviewed but untested with 51+ leads (only 3 seed rows exist); first big import should confirm page 2 works.</li>
+</ul>
+
+<h2>6. Open Questions</h2>
+<ul class="tight">
+  <li>Architecture O1: confirm or substitute the PROPOSED stack choices.</li>
+  <li>Architecture O2: CSV photo URLs direct vs fetch-and-re-upload to Frappe.</li>
+  <li>Architecture O3: login rate-limiting approach on serverless.</li>
+  <li>Any user review changes on the six HTML docs.</li>
+</ul>
+
+<h2>7. Next Action</h2>
+<p>User: (1) claim the Neon project or create a permanent one; (2) import the real sample CSV to confirm formats; (3) push to GitHub + deploy on Vercel per README (set the 7 env vars, run one production migration).</p>
+
+</body>
+</html>

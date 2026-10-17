@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Design Constraints — Bike Purchase Leads Management System</title>
+<style>
+  body { font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+         line-height: 1.6; color: #1a1a1a; max-width: 880px; margin: 0 auto;
+         padding: 2rem 1.25rem 4rem; }
+  h1 { font-size: 1.75rem; border-bottom: 2px solid #1a1a1a; padding-bottom: .5rem; }
+  h2 { font-size: 1.25rem; margin-top: 2.5rem; border-bottom: 1px solid #ddd; padding-bottom: .25rem; }
+  table { border-collapse: collapse; width: 100%; margin: 1rem 0; font-size: .95rem; }
+  th, td { border: 1px solid #ccc; padding: .5rem .75rem; text-align: left; vertical-align: top; }
+  th { background: #f2f2f2; }
+  code { background: #f2f2f2; padding: .1rem .35rem; border-radius: 4px; font-size: .9em; }
+  .meta { color: #555; font-size: .95rem; }
+  ul.tight li, ol.tight li { margin-bottom: .25rem; }
+  .swatch { display: inline-block; width: 1.2em; height: 1.2em; border-radius: 4px;
+            vertical-align: -0.2em; margin-right: .4em; border: 1px solid #999; }
+</style>
+</head>
+<body>
+
+<h1>UI/UX Design Constraints — Bike Purchase Leads Management System</h1>
+<p class="meta">Version: Draft for review &nbsp;|&nbsp; Date: 2026-10-17<br>
+Design guidance: impeccable (Operate mode), frontend-design restraint, responsive-design
+mobile-first, taste anti-slop. Note: the design-taste-frontend skill declares itself
+"not for dashboards or app screens," so it does not apply to this dashboard UI.</p>
+
+<h2>1. Visual Direction</h2>
+<ul class="tight">
+  <li>Clean, minimal, professional operations tool. No F3 Motor brand colors required.</li>
+  <li>Mode is <strong>Operate</strong>: scanability and consistency outrank expression. One restrained
+      surface, quiet chrome, content (lead cards, counts) carries the page.</li>
+  <li>Light theme only for MVP. System font stack. One sans family; clear size hierarchy
+      (page title → section → card title → body → secondary).</li>
+  <li>Flat surfaces separated by small tone steps; no gradients, no glows, no glassmorphism,
+      no violet/indigo accents, no emoji icons, no all-caps micro-labels.</li>
+  <li>Buttons: flat, one fill color for primary, decided once and reused everywhere.</li>
+</ul>
+
+<h2>2. Status Colors (functional coding, as design tokens)</h2>
+<table>
+  <tr><th>Status</th><th>Token</th><th>Tag style</th></tr>
+  <tr><td>New Lead</td><td><code>--status-new</code></td><td><span class="swatch" style="background:#dbeafe"></span>blue tint, dark blue text</td></tr>
+  <tr><td>Qualified</td><td><code>--status-qualified</code></td><td><span class="swatch" style="background:#ccfbf1"></span>teal tint, dark teal text</td></tr>
+  <tr><td>Follow-up</td><td><code>--status-followup</code></td><td><span class="swatch" style="background:#fef3c7"></span>amber tint, dark amber text</td></tr>
+  <tr><td>Negotiation</td><td><code>--status-negotiation</code></td><td><span class="swatch" style="background:#ffedd5"></span>orange tint, dark orange text</td></tr>
+  <tr><td>Closed Won</td><td><code>--status-won</code></td><td><span class="swatch" style="background:#dcfce7"></span>green tint, dark green text</td></tr>
+  <tr><td>Closed Lost</td><td><code>--status-lost</code></td><td><span class="swatch" style="background:#fee2e2"></span>red tint, dark red text</td></tr>
+</table>
+<p>Plus a <code>--status-duplicate</code> outline tag. Tokens are defined once as Tailwind CSS
+variables and exposed as <code>Badge</code> variants (extended via <code>cva</code>);
+components render <code>&lt;Badge&gt;</code>, never raw color classes or hex values.</p>
+
+<h2>3. Accessibility Requirements</h2>
+<ul class="tight">
+  <li>Target WCAG 2.1 AA for an internal tool: visible keyboard focus on all controls, sufficient
+      tag text contrast (dark text on tints), real <code>&lt;button&gt;</code>/<code>&lt;a&gt;</code> elements.</li>
+  <li>Carousel has labeled prev/next controls and alt text per photo; status dropdown is keyboard-operable.</li>
+  <li>Touch targets at least 44×44px on mobile; motion respects <code>prefers-reduced-motion</code>.</li>
+</ul>
+
+<h2>4. Component Philosophy</h2>
+<ul class="tight">
+  <li>Global/shared components → <code>/components/global/</code> (buttons, tags, pagination, toasts, skeletons).</li>
+  <li>Route-specific components → <code>/app/&lt;route&gt;/_components/</code> (lead card, pipeline tabs, dashboard stats).</li>
+  <li>Check for an existing reusable component (grep SOT keywords) before creating a new one.</li>
+  <li>shadcn/ui primitives first (decision D6, confirmed): install via <code>npx shadcn@latest add</code> into <code>/components/ui/</code>; compose app UI from them instead of custom markup. Follow the shadcn skill rules: semantic colors only, built-in variants before custom styles, <code>cn()</code> for conditionals.</li>
+  <li>Icons: lucide-react only, per the shadcn icon rules (<code>data-icon</code> in buttons, no sizing classes inside components).</li>
+</ul>
+
+<h2>5. Interaction Patterns</h2>
+<ul class="tight">
+  <li>Status change: immediate UI update with server confirmation; on failure, revert and show an error toast.</li>
+  <li>Loading: <code>Skeleton</code> cards while lists load; <code>Spinner</code> + <code>disabled</code> on buttons for mutations.</li>
+  <li>Errors: <code>sonner</code> toasts naming what failed and how to retry; never raw stack traces. Inline form errors via <code>Field</code> + <code>data-invalid</code>.</li>
+  <li>Empty states: the <code>Empty</code> component on each list/tab ("No qualified leads yet — new imports land in All Leads.").</li>
+  <li>Delete: always behind an <code>AlertDialog</code> naming the lead.</li>
+  <li>Search: debounced; filters and search combine; pagination resets to page 1 on any filter/search change.</li>
+</ul>
+
+<h2>6. Layout and Responsiveness</h2>
+<ul class="tight">
+  <li>Mobile-first. Card grid: 1 column on phones → 2 on tablets → 3–4 on desktop, driven by content width.</li>
+  <li>Top nav: Dashboard · All Leads · Pipeline · Import · Logout. Collapses to essential links + menu on small screens.</li>
+  <li>Pipeline tabs scroll horizontally on narrow screens; dashboard stat cards wrap.</li>
+  <li>No horizontal overflow at 360px width; images keep aspect ratio, never stretch.</li>
+</ul>
+
+<h2>7. Reusable Component Specs</h2>
+<table>
+  <tr><th>Name</th><th>Props (essence)</th><th>Usage</th></tr>
+  <tr><td>LeadCard</td><td><code>lead, onStatusChange, onEdit, onDelete</code></td><td>All Leads + Pipeline grids. Carousel, details, tag, dropdown, notes/history entry points.</td></tr>
+  <tr><td>StatusTag</td><td><code>status, duplicate?</code></td><td>Color-coded tag (+ duplicate outline) anywhere a status shows.</td></tr>
+  <tr><td>StatusDropdown</td><td><code>value, onChange, disabled?</code></td><td>Status change on cards.</td></tr>
+  <tr><td>PhotoCarousel</td><td><code>photos[], alt</code></td><td>Card image area; graceful single-photo and no-photo states.</td></tr>
+  <tr><td>NotesPanel</td><td><code>leadId, notes[], onAdd</code></td><td>Add/list notes (text + timestamp).</td></tr>
+  <tr><td>HistoryTimeline</td><td><code>events[]</code></td><td>Chronological status/note/edit history.</td></tr>
+  <tr><td>SearchBar</td><td><code>value, onChange, placeholder</code></td><td>Name/phone/reg search on both list pages.</td></tr>
+  <tr><td>FilterBar</td><td><code>status?, source?, onChange</code></td><td>Status + source filters.</td></tr>
+  <tr><td>Pagination</td><td><code>page, totalPages, onPage</code></td><td>50-per-page paging on both list pages.</td></tr>
+  <tr><td>StatCard</td><td><code>label, count, tone?</code></td><td>Dashboard counts per status + new-today.</td></tr>
+  <tr><td>StatusTabs</td><td><code>active, counts?, onSelect</code></td><td>Pipeline's five status tabs (shadcn Tabs).</td></tr>
+</table>
+
+<h2>8. shadcn/ui Components in Use</h2>
+<table>
+  <tr><th>Component</th><th>Purpose in this app</th></tr>
+  <tr><td>Card (+ Header/Title/Content/Footer)</td><td>LeadCard base; StatCard on the dashboard.</td></tr>
+  <tr><td>Badge (extended status variants)</td><td>StatusTag + duplicate tag; six status colors via tokens.</td></tr>
+  <tr><td>Carousel</td><td>PhotoCarousel on lead cards.</td></tr>
+  <tr><td>Select</td><td>StatusDropdown; status + source filters.</td></tr>
+  <tr><td>Tabs</td><td>Pipeline status tabs.</td></tr>
+  <tr><td>Input / Textarea / Field / FieldGroup</td><td>Login, search bar, lead edit form, notes input.</td></tr>
+  <tr><td>Button</td><td>All actions; lucide icons via <code>data-icon</code>.</td></tr>
+  <tr><td>Dialog / Sheet</td><td>Notes panel, history timeline, edit form surface.</td></tr>
+  <tr><td>AlertDialog</td><td>Delete confirmation.</td></tr>
+  <tr><td>Pagination</td><td>50-per-page paging on list pages.</td></tr>
+  <tr><td>Skeleton</td><td>List loading placeholders.</td></tr>
+  <tr><td>Empty</td><td>Empty states on lists and tabs.</td></tr>
+  <tr><td>sonner (toast)</td><td>Success/error feedback for mutations.</td></tr>
+  <tr><td>Separator</td><td>Dividers in cards and timeline.</td></tr>
+  <tr><td>DropdownMenu</td><td>Card overflow actions if needed (edit/delete/notes).</td></tr>
+</table>
+<p>Installed with <code>npx shadcn@latest add &lt;name&gt;</code> as features need them (starting
+with the T1.1 base set). Before adding, check <code>npx shadcn@latest info</code> for what is
+already installed; after adding, read the added files and verify composition and icon imports.</p>
+
+</body>
+</html>
