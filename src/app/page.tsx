@@ -8,6 +8,8 @@ import { getSession } from "@/lib/auth";
 // HOW:  Server-side session check; no UI rendered.
 // WHERE: /
 
+export const instant = false;
+
 export default async function Home() {
   const session = await getSession();
   redirect(session ? "/dashboard" : "/login");

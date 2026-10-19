@@ -26,14 +26,14 @@ export function AppNav() {
   return (
     <header className="border-b">
       <div className="mx-auto flex w-[95%] max-w-[1400px] items-center gap-1 overflow-x-auto p-3 sm:gap-2 sm:p-4">
-        <span className="mr-2 text-sm font-semibold whitespace-nowrap sm:mr-4 sm:text-base">
+        <span className="mr-2 text-base font-semibold whitespace-nowrap sm:mr-4 sm:text-lg">
           Leads Manager
         </span>
         <nav className="flex flex-1 items-center gap-1 sm:gap-2" aria-label="Primary">
           {LINKS.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || pathname.startsWith(`${href}/`);
             return (
-              <Button key={href} variant={active ? "secondary" : "ghost"} size="sm" render={<Link href={href} />}>
+              <Button key={href} variant={active ? "secondary" : "ghost"} nativeButton={false} render={<Link href={href} />}>
                 <Icon data-icon="inline-start" />
                 {label}
               </Button>
@@ -41,7 +41,7 @@ export function AppNav() {
           })}
         </nav>
         <form action={logoutAction}>
-          <Button type="submit" variant="ghost" size="sm">
+          <Button type="submit" variant="ghost">
             <LogOut data-icon="inline-start" />
             Sign out
           </Button>

@@ -2,7 +2,7 @@
 
 ## Phase 1 outcomes (from discussion, 2026-10-14..17)
 - Product: Bike Purchase Leads Management System for F3 Motor. Single user (f3motors).
-- Sources: BikeBecho.com, Bike4Sale, Facebook; extensible.
+- Sources: BikeBecho, Bike4Sale, Facebook; extensible.
 - Statuses: New Lead, Qualified, Follow-up, Negotiation, Closed Won, Closed Lost.
 - Pages: Dashboard (counts by status, new-today, source filter), All Leads
   (cards, search name/phone/reg, status+source filters, 50/page), Pipeline

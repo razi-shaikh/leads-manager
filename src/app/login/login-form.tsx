@@ -26,7 +26,9 @@ export function LoginForm() {
   return (
     <form action={formAction} className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
-        <Label htmlFor="username">Username</Label>
+        <Label htmlFor="username" className="text-[15px]">
+          Username
+        </Label>
         <Input
           id="username"
           name="username"
@@ -34,10 +36,13 @@ export function LoginForm() {
           required
           value={username}
           onChange={(e) => setUsername(e.target.value)}
+          className="text-base md:text-base"
         />
       </div>
       <div className="flex flex-col gap-2">
-        <Label htmlFor="password">Password</Label>
+        <Label htmlFor="password" className="text-[15px]">
+          Password
+        </Label>
         <Input
           id="password"
           name="password"
@@ -46,10 +51,11 @@ export function LoginForm() {
           required
           value={password}
           onChange={(e) => setPassword(e.target.value)}
+          className="text-base md:text-base"
         />
       </div>
       {state.ok === false && state.error !== "" ? (
-        <p role="alert" className="text-sm text-destructive">
+        <p role="alert" className="text-base text-destructive">
           {state.error}
         </p>
       ) : null}

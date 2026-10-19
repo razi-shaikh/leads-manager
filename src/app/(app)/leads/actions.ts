@@ -5,19 +5,22 @@ import { z } from "zod";
 
 import { requireSession } from "@/lib/auth";
 import {
+  createManualLead,
   deleteLead,
-  setLeadFavorite,
-  setLeadFeatured,
+  manualCreateSchema,
+  setLeadPriority,
   setLeadStatus,
   setStatusSchema,
   updateLead,
   updateLeadSchema,
+  type ManualCreateInput,
   type UpdateLeadInput,
 } from "@/services/lead.service";
 import { addNote, addNoteSchema, listNotes } from "@/services/note.service";
 import { listEvents } from "@/services/event.service";
 import { uploadLeadPhotos } from "@/services/photo.service";
 import type { LeadEvent, LeadNote } from "@/db/schema";
+import { leadPrioritySchema, type LeadPriority } from "@/lib/lead-priority";
 import type { LeadStatus } from "@/lib/lead-status";
 
 // SOT:lead-actions
@@ -126,40 +129,38 @@ export async function uploadPhotosAction(
   }
 }
 
-const toggleSchema = z.object({
+const prioritySchema = z.object({
   leadId: z.string().uuid("Invalid lead id"),
-  value: z.boolean(),
+  priority: leadPrioritySchema.nullable(),
 });
 
-export async function toggleFavoriteAction(
+export async function setPriorityAction(
   leadId: string,
-  value: boolean,
+  priority: LeadPriority | null,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   await requireSession();
-  if (!toggleSchema.safeParse({ leadId, value }).success) {
-    return { ok: false, error: "Invalid request." };
+  if (!prioritySchema.safeParse({ leadId, priority }).success) {
+    return { ok: false, error: "Invalid priority." };
   }
   try {
-    await setLeadFavorite(leadId, value);
+    await setLeadPriority(leadId, priority);
   } catch {
-    return { ok: false, error: "Could not update favorite. Try again." };
+    return { ok: false, error: "Could not update priority. Try again." };
   }
   revalidateLists();
   return { ok: true };
 }
 
-export async function toggleFeaturedAction(
-  leadId: string,
-  value: boolean,
+export async function createLeadAction(
+  input: ManualCreateInput,
 ): Promise<{ ok: true } | { ok: false; error: string }> {
   await requireSession();
-  if (!toggleSchema.safeParse({ leadId, value }).success) {
-    return { ok: false, error: "Invalid request." };
-  }
+  const parsed = manualCreateSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, error: "Lead source is required." };
   try {
-    await setLeadFeatured(leadId, value);
+    await createManualLead(parsed.data);
   } catch {
-    return { ok: false, error: "Could not update featured flag. Try again." };
+    return { ok: false, error: "Could not add the lead. Try again." };
   }
   revalidateLists();
   return { ok: true };

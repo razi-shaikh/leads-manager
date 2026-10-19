@@ -78,12 +78,12 @@
     --chart-4: oklch(0.371 0 0);
     --chart-5: oklch(0.269 0 0);
     --radius: 0.625rem;
-    --status-new: #1d4ed8;
+    --status-new: #7D9BE0;
     --status-qualified: #0f766e;
-    --status-followup: #b45309;
-    --status-negotiation: #c2410c;
-    --status-won: #15803d;
-    --status-lost: #b91c1c;
+    --status-followup: #713F12;
+    --status-negotiation: #581C87;
+    --status-won: #14532D;
+    --status-lost: #7F1D1D;
     --sidebar: oklch(0.985 0 0);
     --sidebar-foreground: oklch(0.145 0 0);
     --sidebar-primary: oklch(0.205 0 0);

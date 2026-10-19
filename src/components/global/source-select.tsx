@@ -38,7 +38,7 @@ export function SourceSelect({ sources }: { sources: string[] }) {
 
   return (
     <Select value={sources.includes(active) ? active : "all"} onValueChange={handleChange}>
-      <SelectTrigger aria-label="Filter by lead source" className="w-44">
+      <SelectTrigger aria-label="Filter by lead source" className="w-44 text-[15px]">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

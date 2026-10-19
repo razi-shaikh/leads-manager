@@ -10,6 +10,8 @@ import { LoginForm } from "./login-form";
 // HOW:  Server component; form is the client LoginForm.
 // WHERE: Entry point for unauthenticated visitors.
 
+export const instant = false;
+
 export default async function LoginPage() {
   const session = await getSession();
   if (session) redirect("/dashboard");

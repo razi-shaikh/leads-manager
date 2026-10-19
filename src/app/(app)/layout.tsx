@@ -1,5 +1,6 @@
 import { requireSession } from "@/lib/auth";
 import { Toaster } from "@/components/ui/sonner";
+import { AutoRefresh } from "@/components/global/auto-refresh";
 import { AppNav } from "./nav";
 
 // SOT:app-layout
@@ -8,12 +9,15 @@ import { AppNav } from "./nav";
 // HOW:  requireSession() redirects visitors; AppNav holds links + logout.
 // WHERE: Wraps all routes under src/app/(app)/.
 
+export const instant = false;
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   await requireSession();
 
   return (
     <div className="flex min-h-full flex-col">
       <AppNav />
+      <AutoRefresh />
       <main className="mx-auto w-[95%] max-w-[1400px] flex-1 px-2 py-4 sm:px-3 sm:py-6">{children}</main>
       <Toaster />
     </div>

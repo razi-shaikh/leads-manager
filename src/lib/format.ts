@@ -15,6 +15,15 @@ export function formatDateTime(value: Date | string): string {
   return dateTime.format(date);
 }
 
+/** Owner count for cards: 1 → "1st Owner", 2 → "2nd Owner", 11 → "11th Owner". */
+export function formatOwnerCount(owners: number | null | undefined): string | null {
+  if (owners === null || owners === undefined) return null;
+  const mod100 = owners % 100;
+  const suffix =
+    mod100 >= 11 && mod100 <= 13 ? "th" : owners % 10 === 1 ? "st" : owners % 10 === 2 ? "nd" : owners % 10 === 3 ? "rd" : "th";
+  return `${owners}${suffix} Owner`;
+}
+
 /** Compact card date: "TODAY" for today, else "SEP 22" (uppercase). */
 export function formatLeadDate(value: Date | string | null): string {
   if (!value) return "—";

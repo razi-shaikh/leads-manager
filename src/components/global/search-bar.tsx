@@ -50,7 +50,7 @@ export function SearchBar({ placeholder }: { placeholder: string }) {
         onChange={(e) => setValue(e.target.value)}
         placeholder={placeholder}
         aria-label="Search leads"
-        className="pl-8"
+        className="pl-8 text-[15px] md:text-[15px]"
       />
     </div>
   );

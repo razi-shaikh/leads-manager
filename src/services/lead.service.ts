@@ -6,6 +6,7 @@ import { z } from "zod";
 import { db } from "@/db/client";
 import { leads, type Lead, type NewLead } from "@/db/schema";
 import { LEAD_STATUSES, leadStatusSchema, type LeadStatus } from "@/lib/lead-status";
+import { LEAD_PRIORITIES, type LeadPriority } from "@/lib/lead-priority";
 import { recordEvent } from "./event.service";
 
 // SOT:lead-service
@@ -42,11 +43,19 @@ export const updateLeadSchema = z.object({
   owners: z.number().int().min(0).nullable().optional(),
   location: z.string().trim().max(128).optional(),
   expectedPrice: z.number().int().min(0).nullable().optional(),
+  ourPrice: z.number().int().min(0).nullable().optional(),
 });
 
 export type UpdateLeadInput = z.infer<typeof updateLeadSchema>;
 
 export type CreateLeadInput = Omit<NewLead, "id" | "createdAt" | "updatedAt">;
+
+/** Manual creation: same fields as edit, but source is required. */
+export const manualCreateSchema = updateLeadSchema.extend({
+  source: z.string().trim().min(1).max(64),
+});
+
+export type ManualCreateInput = z.infer<typeof manualCreateSchema>;
 
 function buildConditions(filter: LeadListFilter) {
   const conditions = [];
@@ -111,6 +120,31 @@ export async function createLead(input: CreateLeadInput): Promise<Lead> {
   return lead;
 }
 
+export async function createManualLead(input: ManualCreateInput): Promise<Lead> {
+  const existing = await findDuplicateCandidate(input.phone ?? "", input.regNo ?? "");
+  const lead = await createLead({
+    externalId: null,
+    source: input.source,
+    leadDate: null,
+    customerName: input.customerName ?? "",
+    phone: input.phone ?? "",
+    email: input.email ?? "",
+    brandModel: input.brandModel ?? "",
+    regNo: input.regNo ?? "",
+    year: input.year ?? null,
+    photos: [],
+    kmDriven: input.kmDriven ?? null,
+    owners: input.owners ?? null,
+    location: input.location ?? "",
+    expectedPrice: input.expectedPrice ?? null,
+    ourPrice: input.ourPrice ?? null,
+    status: "new_lead",
+    isDuplicate: existing !== null,
+  });
+  await recordEvent({ leadId: lead.id, type: "import", detail: "Added manually" });
+  return lead;
+}
+
 export async function setLeadStatus(id: string, status: LeadStatus): Promise<Lead> {
   if (!LEAD_STATUSES.includes(status)) throw new Error("Invalid status");
   const current = await getLead(id);
@@ -168,20 +202,13 @@ export async function addLeadPhotos(id: string, urls: string[]): Promise<Lead> {
   return updated;
 }
 
-export async function setLeadFavorite(id: string, value: boolean): Promise<Lead> {
+export async function setLeadPriority(id: string, priority: LeadPriority | null): Promise<Lead> {
+  if (priority !== null && !LEAD_PRIORITIES.includes(priority)) {
+    throw new Error("Invalid priority");
+  }
   const [updated] = await db
     .update(leads)
-    .set({ isFavorite: value, updatedAt: new Date() })
-    .where(eq(leads.id, id))
-    .returning();
-  if (!updated) throw new Error("Lead not found");
-  return updated;
-}
-
-export async function setLeadFeatured(id: string, value: boolean): Promise<Lead> {
-  const [updated] = await db
-    .update(leads)
-    .set({ isFeatured: value, updatedAt: new Date() })
+    .set({ priority, updatedAt: new Date() })
     .where(eq(leads.id, id))
     .returning();
   if (!updated) throw new Error("Lead not found");

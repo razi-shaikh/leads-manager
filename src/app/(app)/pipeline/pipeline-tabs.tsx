@@ -27,7 +27,7 @@ export function PipelineTabs({ active }: { active: LeadStatus }) {
     <Tabs value={active} onValueChange={handleChange}>
       <TabsList aria-label="Pipeline stages" className="max-w-full overflow-x-auto">
         {PIPELINE_STATUSES.map((status) => (
-          <TabsTrigger key={status} value={status}>
+          <TabsTrigger key={status} value={status} className="text-[15px]">
             {LEAD_STATUS_LABELS[status]}
           </TabsTrigger>
         ))}

@@ -9,14 +9,14 @@ import {
 } from "@/lib/lead-status";
 import { LeadGrid } from "@/components/global/lead-grid";
 import { ListPagination } from "@/components/global/list-pagination";
+import { RefreshButton } from "@/components/global/refresh-button";
 import { SearchBar } from "@/components/global/search-bar";
 import { SourceSelect } from "@/components/global/source-select";
 import {
   addNoteAction,
   deleteLeadAction,
   loadDetailsAction,
-  toggleFavoriteAction,
-  toggleFeaturedAction,
+  setPriorityAction,
   updateLeadAction,
   updateStatusAction,
   uploadPhotosAction,
@@ -28,6 +28,8 @@ import { PipelineTabs } from "./pipeline-tabs";
 // WHY:  Work qualified→closed leads by stage (PRD FR-P1–P3); Qualified default.
 // HOW:  ?tab= selects the stage; same card grid and handlers as All Leads.
 // WHERE: /pipeline.
+
+export const instant = false;
 
 type Params = { tab?: string; q?: string; source?: string; page?: string };
 
@@ -56,17 +58,19 @@ export default async function PipelinePage({ searchParams }: { searchParams: Pro
     onUpdate: updateLeadAction,
     onDelete: deleteLeadAction,
     onUploadPhotos: uploadPhotosAction,
-    onToggleFavorite: toggleFavoriteAction,
-    onToggleFeatured: toggleFeaturedAction,
+    onSetPriority: setPriorityAction,
   };
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold">Pipeline</h1>
-        <p className="text-sm text-muted-foreground">
-          {`${total} lead${total === 1 ? "" : "s"}`}
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="text-base text-muted-foreground">
+            {`${total} lead${total === 1 ? "" : "s"}`}
+          </p>
+          <RefreshButton />
+        </div>
       </div>
       <PipelineTabs active={activeTab} />
       <div className="flex flex-wrap items-center gap-2">

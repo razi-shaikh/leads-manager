@@ -50,7 +50,43 @@ export const LEAD_STATUS_TOKENS: Record<LeadStatus, string> = {
   closed_lost: "lost",
 };
 
-export const KNOWN_SOURCES = ["BikeBecho.com", "Bike4Sale", "Facebook"] as const;
+export type StatusNoteRequirement =
+  | { required: false }
+  | { required: true; title: string; label: string };
+
+/**
+ * Moves that must record a note before the status changes:
+ * - anything → Follow-up: note required
+ * - Follow-up → Negotiation: note required
+ * - Negotiation → Closed Won: reason required
+ * - anything → Closed Lost: note required
+ * - Qualified → anything except New Lead: note required (triage gate)
+ * All other moves (e.g. New Lead → Qualified) change immediately.
+ */
+export function statusNoteRequirement(from: LeadStatus, to: LeadStatus): StatusNoteRequirement {
+  if (from === to) return { required: false };
+  if (to === "closed_lost") {
+    return { required: true, title: "Close as lost", label: "Loss reason (required)" };
+  }
+  if (from === "negotiation" && to === "closed_won") {
+    return { required: true, title: "Close as won", label: "Win reason (required)" };
+  }
+  if (to === "follow_up") {
+    return { required: true, title: "Move to Follow-up", label: "Follow-up note (required)" };
+  }
+  if (from === "follow_up" && to === "negotiation") {
+    return { required: true, title: "Move to Negotiation", label: "Negotiation note (required)" };
+  }
+  if (from === "qualified" && to !== "new_lead") {
+    if (to === "negotiation") {
+      return { required: true, title: "Move to Negotiation", label: "Negotiation note (required)" };
+    }
+    return { required: true, title: `Move to ${LEAD_STATUS_LABELS[to]}`, label: "Note (required)" };
+  }
+  return { required: false };
+}
+
+export const KNOWN_SOURCES = ["BikeBecho", "Bike4Sale", "Facebook"] as const;
 
 export type KnownSource = (typeof KNOWN_SOURCES)[number];
 

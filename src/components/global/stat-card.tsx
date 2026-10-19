@@ -19,11 +19,11 @@ export function StatCard(
         {props.status ? (
           <StatusTag status={props.status} />
         ) : (
-          <CardTitle className="text-sm font-medium text-muted-foreground">{props.label}</CardTitle>
+          <CardTitle className="text-base font-medium text-muted-foreground">{props.label}</CardTitle>
         )}
       </CardHeader>
       <CardContent>
-        <p className="text-3xl font-semibold tabular-nums" aria-label={`${props.status ? LEAD_STATUS_LABELS[props.status] : props.label}: ${props.count}`}>
+        <p className="text-4xl font-semibold tabular-nums" aria-label={`${props.status ? LEAD_STATUS_LABELS[props.status] : props.label}: ${props.count}`}>
           {num.format(props.count)}
         </p>
       </CardContent>

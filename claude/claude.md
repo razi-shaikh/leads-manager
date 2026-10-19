@@ -1,6 +1,6 @@
 # Project Overview
 Single-user bike-purchase leads manager for F3 Motor. Daily CSV import from
-BikeBecho.com, Bike4Sale, Facebook; Dashboard, All Leads, Pipeline pages;
+BikeBecho, Bike4Sale, Facebook; Dashboard, All Leads, Pipeline pages;
 card view with status flow New Lead to Closed Won/Lost, notes, history.
 
 # Documentation Files

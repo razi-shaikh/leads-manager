@@ -39,7 +39,7 @@ export function StatusSelect() {
 
   return (
     <Select value={active} onValueChange={handleChange}>
-      <SelectTrigger aria-label="Filter by status" className="w-44">
+      <SelectTrigger aria-label="Filter by status" className="w-44 text-[15px]">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>

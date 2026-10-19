@@ -8,20 +8,24 @@ import { SourceSelect } from "@/components/global/source-select";
 import { StatusSelect } from "@/components/global/status-select";
 import {
   addNoteAction,
+  createLeadAction,
   deleteLeadAction,
   loadDetailsAction,
-  toggleFavoriteAction,
-  toggleFeaturedAction,
+  setPriorityAction,
   updateLeadAction,
   updateStatusAction,
   uploadPhotosAction,
 } from "./actions";
+import { AddLeadDialog } from "@/components/global/add-lead-dialog";
+import { RefreshButton } from "@/components/global/refresh-button";
 
 // SOT:all-leads-page
 // WHAT: All Leads — search + status/source filters + card grid + pagination.
 // WHY:  Full triage surface (PRD FR-L1–L5); filters live in URL params.
 // HOW:  Server component; toolbar components push params; LeadGrid renders.
 // WHERE: /leads.
+
+export const instant = false;
 
 type Params = { q?: string; status?: string; source?: string; page?: string };
 
@@ -46,17 +50,20 @@ export default async function LeadsPage({ searchParams }: { searchParams: Promis
     onUpdate: updateLeadAction,
     onDelete: deleteLeadAction,
     onUploadPhotos: uploadPhotosAction,
-    onToggleFavorite: toggleFavoriteAction,
-    onToggleFeatured: toggleFeaturedAction,
+    onSetPriority: setPriorityAction,
   };
 
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h1 className="text-2xl font-semibold">All Leads</h1>
-        <p className="text-sm text-muted-foreground">
-          {`${total} lead${total === 1 ? "" : "s"}`}
-        </p>
+        <div className="flex items-center gap-3">
+          <p className="text-base text-muted-foreground">
+            {`${total} lead${total === 1 ? "" : "s"}`}
+          </p>
+          <RefreshButton />
+          <AddLeadDialog onCreate={createLeadAction} />
+        </div>
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <SearchBar placeholder="Search name, phone, reg. no…" />

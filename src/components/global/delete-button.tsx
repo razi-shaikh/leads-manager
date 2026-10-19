@@ -27,10 +27,12 @@ export function DeleteButton({
   leadId,
   leadTitle,
   onDelete,
+  onDeleted,
 }: {
   leadId: string;
   leadTitle: string;
   onDelete: (leadId: string) => Promise<{ ok: true } | { ok: false; error: string }>;
+  onDeleted?: () => void;
 }) {
   const [deleting, setDeleting] = useState(false);
 
@@ -45,6 +47,7 @@ export function DeleteButton({
         return;
       }
       toast.success("Lead deleted");
+      onDeleted?.();
     } finally {
       setDeleting(false);
     }

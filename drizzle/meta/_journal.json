@@ -15,6 +15,20 @@
       "when": 1792234438953,
       "tag": "0001_featured-favorite",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792307308764,
+      "tag": "0002_priority",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792314909109,
+      "tag": "0003_our-price",
+      "breakpoints": true
     }
   ]
 }

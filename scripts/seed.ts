@@ -21,7 +21,7 @@ async function main() {
   const seeds: Array<typeof schema.leads.$inferInsert> = [
     {
       externalId: "SEED-001",
-      source: "BikeBecho.com",
+      source: "BikeBecho",
       customerName: "Arun Kumar",
       phone: "9876543210",
       email: "arun.kumar@example.com",

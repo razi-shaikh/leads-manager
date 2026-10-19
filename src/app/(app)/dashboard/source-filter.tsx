@@ -35,7 +35,7 @@ export function SourceFilter({ sources, active }: { sources: string[]; active: s
 
   return (
     <Select value={active} onValueChange={handleChange}>
-      <SelectTrigger aria-label="Filter by lead source" className="w-48">
+      <SelectTrigger aria-label="Filter by lead source" className="w-48 text-[15px]">
         <SelectValue />
       </SelectTrigger>
       <SelectContent>
